@@ -194,22 +194,9 @@ impl MeshBuilder {
         return mesh;
     }
 
-    fn add_face(
-        &mut self,
-        position: [f32; 3],
-        quad: &QuadPrimitive,
-        block_state: BlockState,
-        cull_delimiter: Option<(f32, f32)>,
-    ) {
-        let mut vertices = quad.vertices.clone();
-
-        if let Some((top_left, top_right)) = cull_delimiter {
-            if vertices[0][1] <= top_left && vertices[2][1] <= top_right {
-                return;
-            }
-            vertices[1][1] = vertices[1][1].max(top_left);
-            vertices[3][1] = vertices[3][1].max(top_right);
-        }
+    fn add_face(&mut self, position: [f32; 3], quad: &QuadPrimitive, block_state: BlockState) {
+        let vertices = quad.vertices.clone();
+        let uvs = quad.uvs.clone();
 
         let mut normals = quad.normals.clone();
         block_state.rotation().rotate_normal(&mut normals[0]);
@@ -224,7 +211,7 @@ impl MeshBuilder {
             vertex[2] += position[2];
             self.vertices.push(vertex);
             self.normals.push(normals[i / 2]);
-            self.uvs.push(quad.uvs[i]);
+            self.uvs.push(uvs[i]);
             // Pack bits, from right to left:
             // 19 bits, texture index
             // 3 bits, uv, 1 bit for if it should be diagonal, 2 for coordinate index
@@ -257,11 +244,7 @@ async fn build_mesh(blocks: Blocks, chunk: ExpandedChunk) -> Vec<(Handle<BlockMa
                     continue;
                 }
 
-                let block_state = if block_config.can_have_block_state() {
-                    chunk.get_block_state(x, y, z).unwrap_or_default()
-                } else {
-                    BlockState::default()
-                };
+                let block_state = chunk.get_block_state(x, y, z).unwrap_or_default();
 
                 let builder =
                     if let Some(builder) = mesh_builders.get_mut(&block_config.material_handle) {
@@ -275,8 +258,8 @@ async fn build_mesh(blocks: Blocks, chunk: ExpandedChunk) -> Vec<(Handle<BlockMa
                     };
 
                 for quad in &block_config.quads {
-                    let cull_delimiter = if let Some(mut cull_face) = quad.cull_face {
-                        cull_face = cull_face.rotate(block_state.rotation());
+                    if let Some(cull_face) = quad.cull_face {
+                        let cull_face = cull_face.rotate(block_state.rotation());
 
                         let (x, y, z) = match cull_face {
                             BlockFace::Back => (x, y, z - 1),
@@ -294,35 +277,14 @@ async fn build_mesh(blocks: Blocks, chunk: ExpandedChunk) -> Vec<(Handle<BlockMa
                         let adjacent_block_config = blocks.get_config(adjacent_block_id);
 
                         if adjacent_block_config.culls(block_config) {
-                            let adjacent_block_state =
-                                if adjacent_block_config.can_have_block_state() {
-                                    chunk
-                                        .get_block_state(x, y, z)
-                                        .unwrap_or(BlockState::default())
-                                } else {
-                                    BlockState::default()
-                                };
-
-                            match adjacent_block_config.cull_delimiter(
-                                cull_face
-                                    .opposite()
-                                    .reverse_rotate(adjacent_block_state.rotation()),
-                            ) {
-                                Some(deli) => Some(deli),
-                                None => continue,
-                            }
-                        } else {
-                            None
+                            continue;
                         }
-                    } else {
-                        None
-                    };
+                    }
 
                     builder.add_face(
                         [x as f32 - 1.0, y as f32 - 1.0, z as f32 - 1.0],
                         quad,
                         block_state,
-                        cull_delimiter,
                     );
                 }
             }
