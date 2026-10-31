@@ -2687,8 +2687,21 @@ dependencies = [
 ]
 
 [[package]]
-name = "fmc-stub"
+name = "fmc-protocol"
 version = "0.1.0"
+dependencies = [
+ "bevy",
+ "fmc-protocol-derive",
+ "serde",
+]
+
+[[package]]
+name = "fmc-protocol-derive"
+version = "0.1.0"
+dependencies = [
+ "quote",
+ "syn 3.0.9",
+]
 
 [[package]]
 name = "fnv"

@@ -57,6 +57,10 @@ features = [
 ]
 
 [workspace.dependencies]
+serde = { version = "1.0.229", features = ["derive"] }
+
+fmc-protocol.path = "crates/fmc-protocol"
+fmc-protocol-derive.path = "crates/fmc-protocol-derive"
 
 [profile.dev]
 opt-level = 1

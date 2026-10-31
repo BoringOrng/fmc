@@ -1,7 +1,7 @@
 use proc_macro::TokenStream;
 
 use quote::quote;
-use syn::{parse_macro_input, DeriveInput};
+use syn::{DeriveInput, parse_macro_input};
 
 #[proc_macro_derive(ServerBound)]
 pub fn derive_server_message(input: TokenStream) -> TokenStream {

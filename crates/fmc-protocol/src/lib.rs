@@ -1,18 +1,3 @@
-#![deny(
-    //missing_docs,
-    missing_debug_implementations,
-    // why does it need this
-    //missing_copy_implementations,
-    trivial_casts,
-    trivial_numeric_casts,
-    unsafe_code,
-    unstable_features,
-    unused_import_braces,
-    unused_qualifications,
-    clippy::unwrap_used
-)]
-#![allow(clippy::type_complexity)]
-
 mod network_message;
 
 pub mod messages;
