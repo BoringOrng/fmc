@@ -20,7 +20,7 @@ fmc_noise.workspace = true
 
 clap = { version = "4.6.7", features = ["derive"] }
 dirs = "7.0.0"
-wasmtime = "50.0.1"
+wasmtime = "=46.0.1"
 ureq = "3.5.0"
 nonmax = "0.5.5"
 bitflags = "2.13.2"
@@ -55,6 +55,7 @@ dev = [
 [workspace]
 resolver = "3"
 members = ["crates/fmc-*"]
+exclude = ["docs/examples"]
 
 [workspace.package]
 edition = "2024"

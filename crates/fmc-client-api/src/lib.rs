@@ -30,19 +30,13 @@ static mut PLUGIN: Option<Box<dyn Plugin>> = None;
 
 #[doc(hidden)]
 pub fn register_plugin(build_plugin: fn() -> Box<dyn Plugin>) {
-    unsafe {
-        PLUGIN = Some(build_plugin());
-    }
+    unsafe { PLUGIN = Some(build_plugin()) }
 }
 
-#[expect(static_mut_refs, reason = "will be fixed eventually")]
-fn with_plugin<F, R>(f: F) -> R
-where
-    F: FnOnce(&mut dyn Plugin) -> R,
-{
+fn plugin() -> &'static mut dyn Plugin {
+    #[expect(static_mut_refs)]
     unsafe {
-        let plugin = PLUGIN.as_mut().expect("plugin not initialized");
-        f(plugin.as_mut())
+        PLUGIN.as_deref_mut().unwrap()
     }
 }
 
@@ -66,8 +60,6 @@ mod wit {
     }
 }
 
-use std::{cell::RefCell, sync::OnceLock};
-
 pub use wit::{
     Key, KeyboardKey, delta_time, get_block, get_block_state, get_camera_transform,
     get_model_transform, get_models, get_player_transform, keyboard_input, log,
@@ -75,7 +67,7 @@ pub use wit::{
 };
 
 pub mod math {
-    pub use bevy::math::*;
+    pub use glam::*;
 }
 
 pub mod prelude {
@@ -89,14 +81,14 @@ struct Component;
 
 impl wit::Guest for Component {
     fn set_update_frequency() -> Option<f32> {
-        with_plugin(|p| p.set_update_frequency())
+        plugin().set_update_frequency()
     }
 
     fn update() {
-        with_plugin(|p| p.update());
+        plugin().update()
     }
 
     fn handle_server_data(data: Vec<u8>) {
-        with_plugin(|p| p.handle_server_data(data));
+        plugin().handle_server_data(data)
     }
 }

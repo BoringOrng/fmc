@@ -1,6 +1,11 @@
+use fmc_client_api as fmc;
+
 struct MyPlugin;
 
-impl fmc_client_api::Plugin for MyPlugin {
+// Required for initialization
+fmc::register_plugin!(MyPlugin);
+
+impl fmc::Plugin for MyPlugin {
     fn new() -> Self
     where
         Self: Sized,
@@ -10,7 +15,7 @@ impl fmc_client_api::Plugin for MyPlugin {
 
     // Your update logic
     fn update(&mut self) {
-        todo!()
+        todo!();
     }
 
     // Plugins are run once per frame. You can use this to set a fixed update timer instead. Note
@@ -21,6 +26,3 @@ impl fmc_client_api::Plugin for MyPlugin {
         Some(1.0 / 144.0)
     }
 }
-
-// Required for initialization
-fmc_client_api::register_plugin!(MyPlugin);
