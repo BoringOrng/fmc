@@ -1,3 +1,11 @@
+# rust
 **/target
 **/Cargo.lock
 
+# nix
+/.direnv
+/.envrc
+
+# game files
+/data
+/config
