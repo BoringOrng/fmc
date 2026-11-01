@@ -106,8 +106,8 @@ fn vertex(vertex: Vertex) -> VertexOutput {
     let rotate_uv = bool((vertex.packed_bits & 0x200000u) >> 21u);
     if rotate_uv {
         out.uv = vec2<f32>(
-            0.5 + cos(0.25 * HALF_PI) * (out.uv.x - 0.5) + sin(0.25 * HALF_PI) * (out.uv.y - 0.5),
-            0.5 - sin(0.25 * HALF_PI) * (out.uv.x - 0.5) + cos(0.25 * HALF_PI) * (out.uv.y - 0.5),
+            0.5 + cos(0.5 * HALF_PI) * (out.uv.x - 0.5) + sin(0.5 * HALF_PI) * (out.uv.y - 0.5),
+            0.5 - sin(0.5 * HALF_PI) * (out.uv.x - 0.5) + cos(0.5 * HALF_PI) * (out.uv.y - 0.5),
         );
     }
 

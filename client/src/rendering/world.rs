@@ -195,14 +195,11 @@ impl MeshBuilder {
     }
 
     fn add_face(&mut self, position: [f32; 3], quad: &QuadPrimitive, block_state: BlockState) {
-        let vertices = quad.vertices.clone();
-        let uvs = quad.uvs.clone();
-
         let mut normals = quad.normals.clone();
         block_state.rotation().rotate_normal(&mut normals[0]);
         block_state.rotation().rotate_normal(&mut normals[1]);
 
-        for (i, mut vertex) in vertices.into_iter().enumerate() {
+        for (i, mut vertex) in quad.vertices.into_iter().enumerate() {
             // TODO: Upside down
             block_state.rotation().rotate_vertex(&mut vertex);
 
@@ -211,7 +208,7 @@ impl MeshBuilder {
             vertex[2] += position[2];
             self.vertices.push(vertex);
             self.normals.push(normals[i / 2]);
-            self.uvs.push(uvs[i]);
+            self.uvs.push(quad.uvs[i]);
             // Pack bits, from right to left:
             // 19 bits, texture index
             // 3 bits, uv, 1 bit for if it should be diagonal, 2 for coordinate index
