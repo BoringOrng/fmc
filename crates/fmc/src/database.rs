@@ -500,8 +500,8 @@ impl Database {
         let mut block_names: Vec<String> = Vec::new();
 
         for file_path in walk_dir(&crate::blocks::BLOCK_CONFIG_PATH) {
-            let file = std::fs::File::open(&file_path).unwrap();
-            let config: serde_json::Value = match serde_json::from_reader(file) {
+            let contents = std::fs::read_to_string(&file_path).unwrap();
+            let config: serde_json::Value = match serde_json::from_str(&contents) {
                 Ok(c) => c,
                 Err(e) => panic!(
                     "Failed to read block config at path: {}\nError: {}",

@@ -405,7 +405,12 @@ fn handle_chunk_loading_tasks(
 
             world_map.insert(new_chunk_position, chunk);
 
-            // XXX: Terrain features that fit within the chunk should be applied at generation!
+            // TODO: This is horrible, negates the benefit of doing it async, and will bottleneck.
+            // Feature generation and application must be done entirely inside the generation task.
+            // It was done like this because placing blocks from features generated in other chunks
+            // means we need to know where those features were generated. Feature placement is of
+            // course dependent on the terrain, so we would need to generate adjacent chunks in
+            // order to know, which is prohibitively expensive.
             for adjacent_chunk_position in new_chunk_position.neighbourhood() {
                 if adjacent_chunk_position == new_chunk_position {
                     continue;

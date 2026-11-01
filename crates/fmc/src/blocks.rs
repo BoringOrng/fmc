@@ -258,8 +258,8 @@ fn load_block_materials() -> HashMap<String, BlockMaterial> {
             .to_string_lossy()
             .into_owned();
 
-        let file = match std::fs::File::open(&file_path) {
-            Ok(f) => f,
+        let contents = match std::fs::read_to_string(&file_path) {
+            Ok(c) => c,
             Err(e) => panic!(
                 "Failed to open block material config.\nPath: {}\nError: {}",
                 file_path.to_string_lossy(),
@@ -267,7 +267,7 @@ fn load_block_materials() -> HashMap<String, BlockMaterial> {
             ),
         };
 
-        let block_material: BlockMaterial = match serde_json::from_reader(file) {
+        let block_material: BlockMaterial = match serde_json::from_str(&contents) {
             Ok(c) => c,
             Err(e) => panic!(
                 "Failed to read material configuration at path: '{}'\nError: {}",
@@ -481,9 +481,9 @@ impl BlockConfigJson {
         fn read_as_json_value(
             path: &std::path::Path,
         ) -> Result<serde_json::Value, Box<dyn std::error::Error>> {
-            let file = std::fs::File::open(&path)?;
+            let contents = std::fs::read_to_string(&path)?;
 
-            let mut config: serde_json::Value = serde_json::from_reader(&file)?;
+            let mut config: serde_json::Value = serde_json::from_str(&contents)?;
 
             // recursively read parent configs
             if let Some(parent) = config["parent"].as_str() {
@@ -733,6 +733,40 @@ pub enum BlockFace {
 }
 
 impl BlockFace {
+    pub fn iter() -> impl Iterator<Item = Self> {
+        [
+            Self::Front,
+            Self::Back,
+            Self::Right,
+            Self::Left,
+            Self::Top,
+            Self::Bottom,
+        ]
+        .into_iter()
+    }
+
+    pub fn offset(&self) -> IVec3 {
+        match self {
+            Self::Front => IVec3::Z,
+            Self::Back => IVec3::NEG_Z,
+            Self::Right => IVec3::X,
+            Self::Left => IVec3::NEG_X,
+            Self::Top => IVec3::Y,
+            Self::Bottom => IVec3::NEG_Y,
+        }
+    }
+
+    pub fn opposite(&self) -> Self {
+        match self {
+            Self::Front => Self::Back,
+            Self::Back => Self::Front,
+            Self::Right => Self::Left,
+            Self::Left => Self::Right,
+            Self::Top => Self::Bottom,
+            Self::Bottom => Self::Top,
+        }
+    }
+
     pub fn shift_position(&self, position: BlockPosition) -> BlockPosition {
         match self {
             Self::Front => position + IVec3::Z,
@@ -772,6 +806,9 @@ impl BlockFace {
 #[derive(Component, Deref, DerefMut, Clone)]
 pub struct BlockData(pub Vec<u8>);
 
+// TODO: BlockState is always optional so it has to be unwrapped from Option<BlockState> everywhere.
+// This is very cumbersome. Maybe it's a better interface to store the option internally in the struct?
+//
 /// Common state that can be attached to blocks to alter them. Sent to clients along with the block
 /// ids in chunks.  
 ///
@@ -930,7 +967,7 @@ impl SubAssign<IVec3> for BlockPosition {
 
 /// The rotation of a block, the variants correspond to which way the block will face when rotated,
 /// but it is still a CCW rotation.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[repr(u16)]
 pub enum BlockRotation {
     Front = 0,

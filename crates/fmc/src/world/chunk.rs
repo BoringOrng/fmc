@@ -50,8 +50,8 @@ impl Chunk {
     ) -> (ChunkPosition, Chunk) {
         let mut chunk = terrain_generator.generate_chunk(chunk_position);
 
-        let changed_blocks = database.load_chunk_blocks(&chunk_position);
-        for (index, (block_id, maybe_block_state, maybe_block_data)) in changed_blocks {
+        let delta_blocks = database.load_chunk_blocks(&chunk_position);
+        for (index, (block_id, maybe_block_state, maybe_block_data)) in delta_blocks {
             chunk.changed_blocks.insert(index);
             chunk[index] = block_id;
             if let Some(block_state) = maybe_block_state {
