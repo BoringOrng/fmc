@@ -276,8 +276,6 @@ pub fn load_blocks(
                     }
                 };
 
-                let mut cull_delimiters = [None, None, None, None];
-
                 if let Some(quads) = quads {
                     for quad in quads.iter() {
                         let texture_array_id = match block_textures.get(&quad.texture) {
@@ -345,19 +343,6 @@ pub fn load_blocks(
                             }
                         }
 
-                        match quad.cull_face {
-                            Some(BlockFace::Top) | Some(BlockFace::Bottom) => (),
-                            Some(b) => {
-                                if quad.vertices[0][1] != 1.0 || quad.vertices[2][1] != 1.0 {
-                                    // Top left -> top right and vice versa to mirror it to how a
-                                    // facing block would see it.
-                                    cull_delimiters[b as usize] =
-                                        Some((quad.vertices[2][1], quad.vertices[0][1]));
-                                }
-                            }
-                            None => (),
-                        }
-
                         mesh_primitives.push(QuadPrimitive {
                             vertices: quad.vertices,
                             normals,
@@ -400,7 +385,6 @@ pub fn load_blocks(
                     friction,
                     interactable,
                     cull_method,
-                    cull_delimiters,
                     light: light.min(15),
                     light_attenuation: light_attenuation.unwrap_or(15).min(15),
                     fog_settings,
@@ -433,7 +417,6 @@ pub fn load_blocks(
                     friction,
                     interactable,
                     cull_method: CullMethod::None,
-                    cull_delimiters: Default::default(),
                     light: light.min(15),
                     light_attenuation: 1,
                     fog_settings: None,
@@ -508,18 +491,6 @@ pub struct Block {
     interactable: bool,
     // The alpha mode of the blocks associated material, used to determine face culling.
     cull_method: CullMethod,
-    // TODO: This is not strictly needed I think, and it makes the code messy in a direction I
-    // don't like. It was needed for water, but I don't think it's actually needed for anything
-    // else. Water could be implemented by having many more water blocks to ensure that all
-    // possible water states are covered. This would also make water feel fluent, which it doesn't
-    // currently. I didn't because I feel bad about wasting some 500 blocks (9!/6! I think is
-    // correct.)
-    //
-    // Two vertical points on the left and right side of the vertical block faces that make a line
-    // delimiting how much of an adjacent block face it will cull. This is needed for transparent
-    // blocks like water as you only want the parts exposed to air to render when two water blocks
-    // of different levels are adjacent to each other.
-    cull_delimiters: [Option<(f32, f32)>; 4],
     // Light emitted by the block
     light: u8,
     // How much the block attenuates light. '0' will make sunlight travel downwards unimpeded, but
@@ -544,13 +515,6 @@ impl Block {
         matches!(self.friction, Friction::Surface { .. })
     }
 
-    pub fn cull_delimiter(&self, block_face: BlockFace) -> Option<(f32, f32)> {
-        match block_face {
-            BlockFace::Top | BlockFace::Bottom => None,
-            b => self.cull_delimiters[b as usize],
-        }
-    }
-
     pub fn culls(&self, other: &Block) -> bool {
         match self.cull_method {
             CullMethod::All => true,
@@ -563,11 +527,6 @@ impl Block {
             CullMethod::OnlySelf => other.cull_method == CullMethod::OnlySelf,
         }
     }
-
-    pub fn can_have_block_state(&self) -> bool {
-        self.placement.rotatable || self.placement.side_transform.is_some()
-    }
-
     pub fn surface_friction(&self, block_face: BlockFace) -> Vec3 {
         let friction = match self.friction {
             Friction::Surface {
