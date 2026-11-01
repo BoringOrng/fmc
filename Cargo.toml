@@ -5,7 +5,6 @@ license-file = "LICENSE"
 edition.workspace = true
 
 [dependencies]
-tracing.workspace = true
 bevy = { workspace = true, features = ["default", "serialize", "file_watcher"] }
 serde.workspace = true
 serde_json.workspace = true
@@ -71,13 +70,6 @@ priority = -1
 [workspace.lints.clippy]
 type_complexity = "allow"
 too_many_arguments = "allow"
-
-[workspace.dependencies.tracing]
-version = "0.1"
-features = [
-    "max_level_debug",
-    "release_max_level_warn",
-]
 
 [workspace.dependencies]
 bevy = { version = "0.19", default-features = false }

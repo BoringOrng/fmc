@@ -4074,7 +4074,6 @@ dependencies = [
  "serde",
  "serde_json",
  "tar",
- "tracing",
  "ureq",
  "wasmtime",
  "zstd 0.14.3",
