@@ -941,7 +941,7 @@ fn send_animations(
 
         for animation in animation_player.animation_queue.drain(..) {
             net.send_many(
-                subs.iter(),
+                subs,
                 messages::ModelPlayAnimation {
                     model_id: animation_player.target.unwrap_or(entity).index_u32(),
                     animation_index: animation.animation_index,
@@ -969,7 +969,7 @@ fn send_color(
         };
 
         net.send_many(
-            subs.iter(),
+            subs,
             messages::ModelColor {
                 model_id: entity.index_u32(),
                 color: color.to_vec4(),

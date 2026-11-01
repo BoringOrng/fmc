@@ -154,9 +154,8 @@ impl Server {
 
     /// Broadcast a message to all the clients
     #[track_caller]
-    pub fn broadcast<T: ClientBound + Serialize>(&mut self, message: T) {
-        let keys = self.connections.keys();
-        self.send_many(keys, message);
+    pub fn broadcast<T: ClientBound + Serialize>(&self, message: T) {
+        self.send_many(self.connections.keys(), message);
     }
 
     /// Disconnect a client
