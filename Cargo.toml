@@ -68,6 +68,8 @@ level = "warn"
 priority = -1
 
 [workspace.lints.clippy]
+type_complexity = "allow"
+too_many_arguments = "allow"
 
 [workspace.dependencies.bevy]
 version = "0.19"
