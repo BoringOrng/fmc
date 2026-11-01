@@ -736,9 +736,9 @@ impl BlockJson {
     fn read_as_json(
         path: &std::path::Path,
     ) -> Result<serde_json::Value, Box<dyn std::error::Error>> {
-        let file = std::fs::File::open(&path)?;
+        let contents = std::fs::read_to_string(&path)?;
 
-        let mut config: serde_json::Value = serde_json::from_reader(&file)?;
+        let mut config: serde_json::Value = serde_json::from_str(&contents)?;
 
         // recursively read parent configs
         if let Some(parent) = config["parent"].as_str() {

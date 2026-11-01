@@ -258,8 +258,8 @@ fn load_block_materials() -> HashMap<String, BlockMaterial> {
             .to_string_lossy()
             .into_owned();
 
-        let file = match std::fs::File::open(&file_path) {
-            Ok(f) => f,
+        let contents = match std::fs::read_to_string(&file_path) {
+            Ok(c) => c,
             Err(e) => panic!(
                 "Failed to open block material config.\nPath: {}\nError: {}",
                 file_path.to_string_lossy(),
@@ -267,7 +267,7 @@ fn load_block_materials() -> HashMap<String, BlockMaterial> {
             ),
         };
 
-        let block_material: BlockMaterial = match serde_json::from_reader(file) {
+        let block_material: BlockMaterial = match serde_json::from_str(&contents) {
             Ok(c) => c,
             Err(e) => panic!(
                 "Failed to read material configuration at path: '{}'\nError: {}",
@@ -481,9 +481,9 @@ impl BlockConfigJson {
         fn read_as_json_value(
             path: &std::path::Path,
         ) -> Result<serde_json::Value, Box<dyn std::error::Error>> {
-            let file = std::fs::File::open(&path)?;
+            let contents = std::fs::read_to_string(&path)?;
 
-            let mut config: serde_json::Value = serde_json::from_reader(&file)?;
+            let mut config: serde_json::Value = serde_json::from_str(&contents)?;
 
             // recursively read parent configs
             if let Some(parent) = config["parent"].as_str() {
