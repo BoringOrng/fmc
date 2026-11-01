@@ -1,5 +1,10 @@
-**/target
+# rust
+/target
 
 # nix
 /.direnv
 /.envrc
+
+# game files
+/data
+/config

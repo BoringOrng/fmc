@@ -58,13 +58,13 @@ mod wit {
 }
 
 pub use wit::{
-    delta_time, get_block, get_block_state, get_camera_transform, get_model_transform, get_models,
-    get_player_transform, keyboard_input, log, set_camera_transform, set_player_transform, Key,
-    KeyboardKey,
+    Key, KeyboardKey, delta_time, get_block, get_block_state, get_camera_transform,
+    get_model_transform, get_models, get_player_transform, keyboard_input, log,
+    set_camera_transform, set_player_transform,
 };
 
 pub mod math {
-    pub use glam::*;
+    pub use bevy::math::*;
 }
 
 pub mod prelude {

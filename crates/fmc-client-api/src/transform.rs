@@ -1,6 +1,6 @@
 use std::ops::Mul;
 
-use glam::{Affine3A, DQuat, DVec3, Mat4, Quat, Vec3};
+use bevy::math::{Affine3A, DQuat, DVec3, Mat4, Quat, Vec3};
 
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub struct Transform {
@@ -291,7 +291,7 @@ impl Transform {
         let forward = DVec3::normalize(self.translation.as_dvec3() - target.as_dvec3());
         let right = up.as_dvec3().cross(forward).normalize();
         let up = forward.cross(right);
-        self.rotation = DQuat::from_mat3(&glam::DMat3::from_cols(right, up, forward));
+        self.rotation = DQuat::from_mat3(&bevy::math::DMat3::from_cols(right, up, forward));
     }
 
     /// Multiplies `self` with `transform` component by component, returning the
