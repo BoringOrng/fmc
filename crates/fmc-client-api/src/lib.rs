@@ -17,7 +17,7 @@ pub trait Plugin: Send + Sync {
 #[macro_export]
 macro_rules! register_plugin {
     ($plugin_type:ty) => {
-        #[export_name = "init-plugin"]
+        #[unsafe(export_name = "init-plugin")]
         pub extern "C" fn __init_plugin() {
             fmc_client_api::register_plugin(|| {
                 Box::new(<$plugin_type as fmc_client_api::Plugin>::new())

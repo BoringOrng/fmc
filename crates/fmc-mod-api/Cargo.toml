@@ -20,5 +20,8 @@ fmc-protocol.workspace = true
 gltf = "1.4.1"
 once_cell = "1.21.4"
 
+[dev-dependencies]
+fmc_vanilla = { version = "0.1.1" }
+
 [lints]
 workspace = true

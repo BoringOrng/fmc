@@ -10,3 +10,7 @@ wit-bindgen = "0.63.0"
 
 [lints]
 workspace = true
+
+[[example]]
+name = "simple"
+crate-type = ["rlib"]
