@@ -733,6 +733,40 @@ pub enum BlockFace {
 }
 
 impl BlockFace {
+    pub fn iter() -> impl Iterator<Item = Self> {
+        [
+            Self::Front,
+            Self::Back,
+            Self::Right,
+            Self::Left,
+            Self::Top,
+            Self::Bottom,
+        ]
+        .into_iter()
+    }
+
+    pub fn offset(&self) -> IVec3 {
+        match self {
+            Self::Front => IVec3::Z,
+            Self::Back => IVec3::NEG_Z,
+            Self::Right => IVec3::X,
+            Self::Left => IVec3::NEG_X,
+            Self::Top => IVec3::Y,
+            Self::Bottom => IVec3::NEG_Y,
+        }
+    }
+
+    pub fn opposite(&self) -> Self {
+        match self {
+            Self::Front => Self::Back,
+            Self::Back => Self::Front,
+            Self::Right => Self::Left,
+            Self::Left => Self::Right,
+            Self::Top => Self::Bottom,
+            Self::Bottom => Self::Top,
+        }
+    }
+
     pub fn shift_position(&self, position: BlockPosition) -> BlockPosition {
         match self {
             Self::Front => position + IVec3::Z,
@@ -772,6 +806,9 @@ impl BlockFace {
 #[derive(Component, Deref, DerefMut, Clone)]
 pub struct BlockData(pub Vec<u8>);
 
+// TODO: BlockState is always optional so it has to be unwrapped from Option<BlockState> everywhere.
+// This is very cumbersome. Maybe it's a better interface to store the option internally in the struct?
+//
 /// Common state that can be attached to blocks to alter them. Sent to clients along with the block
 /// ids in chunks.  
 ///
@@ -930,7 +967,7 @@ impl SubAssign<IVec3> for BlockPosition {
 
 /// The rotation of a block, the variants correspond to which way the block will face when rotated,
 /// but it is still a CCW rotation.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[repr(u16)]
 pub enum BlockRotation {
     Front = 0,
