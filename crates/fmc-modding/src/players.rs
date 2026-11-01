@@ -98,7 +98,7 @@ impl DefaultPlayerBundle {
 
 // TODO: Defunct, handled in wasm plugin now. Remember to remove the protocol message
 fn send_aabb(
-    net: Res<Server>,
+    mut net: ResMut<Server>,
     aabb_query: Query<(Entity, &Collider), (Changed<Collider>, With<Player>)>,
 ) {
     for (entity, collider) in aabb_query.iter() {

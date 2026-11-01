@@ -117,15 +117,15 @@ pub struct Server {
 impl Server {
     /// Send a message to one client
     #[track_caller]
-    pub fn send_one<T: ClientBound + Serialize>(&self, connection_entity: Entity, message: T) {
-        self.send_many(&[connection_entity], message);
+    pub fn send_one<T: ClientBound + Serialize>(&mut self, connection_entity: Entity, message: T) {
+        self.send_many([connection_entity], message);
     }
 
     /// Send a message to many clients
     #[track_caller]
-    pub fn send_many<'a, T: ClientBound + Serialize>(
-        &self,
-        connection_entities: impl IntoIterator<Item = &'a Entity>,
+    pub fn send_many<T: ClientBound + Serialize>(
+        &mut self,
+        connection_entities: impl IntoIterator<Item = Entity>,
         message: T,
     ) {
         assert!(
@@ -133,8 +133,8 @@ impl Server {
             "Messages can only be sent between 'First' and 'Last'"
         );
 
-        for connection_entity in connection_entities.into_iter().cloned() {
-            let Some(connection) = self.connections.get(&connection_entity) else {
+        for connection_entity in connection_entities.into_iter() {
+            let Some(connection) = self.connections.get_mut(&connection_entity) else {
                 // TODO: Server isn't supposed to have access to removed connection entities?
                 // Continue added to deal with later
                 continue;
@@ -152,11 +152,14 @@ impl Server {
         }
     }
 
-    /// Broadcast a message to all the clients
-    #[track_caller]
-    pub fn broadcast<'a, T: ClientBound + Serialize>(&self, message: T) {
-        self.send_many(self.connections.keys(), message);
-    }
+    // TODO: fix the mutable borrow issue
+    //
+    // /// Broadcast a message to all the clients
+    // #[track_caller]
+    // pub fn broadcast<T: ClientBound + Serialize>(&mut self, message: T) {
+    //     let keys = self.connections.keys().copied();
+    //     self.send_many(keys, message);
+    // }
 
     /// Disconnect a client
     pub fn disconnect(&self, connection_entity: Entity) -> bool {
@@ -178,26 +181,17 @@ impl WriteBuffer {
     // TODO: This could be implemented with SliceIndex I think, but it requires an unstable flag
     // and I somewhat prefer having all the methods, makes you aware you are doing something
     // dangerous.
-    fn index(&self, index: usize) -> &mut u8 {
-        unsafe {
-            let vec = &mut *self.0.get();
-            &mut vec[index]
-        }
+    fn index(&mut self, index: usize) -> &mut u8 {
+        &mut self.0.get_mut()[index]
     }
 
-    fn range(&self, index: Range<usize>) -> &mut [u8] {
-        unsafe {
-            let vec = &mut *self.0.get();
-            &mut vec[index]
-        }
+    fn range(&mut self, index: Range<usize>) -> &mut [u8] {
+        &mut self.0.get_mut()[index]
     }
 
     #[track_caller]
-    fn range_to(&self, index: RangeTo<usize>) -> &mut [u8] {
-        unsafe {
-            let vec = &mut *self.0.get();
-            &mut vec[index]
-        }
+    fn range_to(&mut self, index: RangeTo<usize>) -> &mut [u8] {
+        &mut self.0.get_mut()[index]
     }
 }
 
@@ -245,7 +239,7 @@ impl Connection {
         }
     }
 
-    fn write_message<T: ClientBound + Serialize>(&self, message: &T) -> Result<(), ()> {
+    fn write_message<T: ClientBound + Serialize>(&mut self, message: &T) -> Result<(), ()> {
         let size = bincode::serialized_size(message).unwrap() as usize;
         let total_size = size + HEADER_SIZE;
 

@@ -118,7 +118,7 @@ fn register_interface_nodes(
 
 fn sort_interface_interactions(
     mut commands: Commands,
-    net: Res<Server>,
+    mut net: ResMut<Server>,
     interface_nodes: Query<&InterfaceNodes>,
     mut interface_events: Query<&mut InterfaceEvents>,
     mut interface_interactions: ResMut<Messages<NetworkMessage<messages::InterfaceInteraction>>>,

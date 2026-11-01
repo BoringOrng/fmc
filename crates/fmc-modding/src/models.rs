@@ -553,7 +553,7 @@ impl ModelMap {
 }
 
 fn remove_models(
-    net: Res<Server>,
+    mut net: ResMut<Server>,
     mut model_map: ResMut<ModelMap>,
     chunk_subscriptions: Res<ChunkSubscriptions>,
     mut deleted_models: RemovedComponents<Model>,
@@ -575,7 +575,7 @@ fn remove_models(
 
         if let Some(subs) = chunk_subscriptions.get_subscribers(&chunk_position) {
             net.send_many(
-                subs,
+                subs.iter().copied(),
                 messages::DeleteModel {
                     model_id: entity.index_u32(),
                 },
@@ -586,7 +586,7 @@ fn remove_models(
 
 // TODO: Split position, rotation and scale into packets?
 fn send_model_transform(
-    net: Res<Server>,
+    mut net: ResMut<Server>,
     chunk_subscriptions: Res<ChunkSubscriptions>,
     mut model_map: ResMut<ModelMap>,
     model_query: Query<
@@ -615,7 +615,7 @@ fn send_model_transform(
         };
 
         net.send_many(
-            subs,
+            subs.iter().copied(),
             messages::ModelUpdateTransform {
                 model_id: entity.index_u32(),
                 bone: None,
@@ -684,7 +684,7 @@ fn apply_movement_animations(
 
 // TODO: I'm not entirely sure what the purpose of this was. Why not just replace the model?
 fn update_model_assets(
-    net: Res<Server>,
+    mut net: ResMut<Server>,
     chunk_subscriptions: Res<ChunkSubscriptions>,
     model_query: Query<
         (Entity, Ref<Model>, &Observers, &Transform, &ModelVisibility),
@@ -708,7 +708,7 @@ fn update_model_assets(
         };
 
         net.send_many(
-            observers.filter(subs),
+            observers.filter(subs).copied(),
             messages::ModelUpdateAsset {
                 model_id: entity.index_u32(),
                 asset: model_id,
@@ -719,7 +719,7 @@ fn update_model_assets(
 
 // TODO: Animations must be sent
 fn send_models(
-    net: Res<Server>,
+    mut net: ResMut<Server>,
     chunk_subscriptions: Res<ChunkSubscriptions>,
     model_query: Query<
         (
@@ -758,7 +758,7 @@ fn send_models(
             match model {
                 Model::Asset(model_id) => {
                     net.send_many(
-                        observers.filter(subs),
+                        observers.filter(subs).copied(),
                         messages::NewModel {
                             model_id: entity.index_u32(),
                             parent_id: maybe_parent.map(|p| p.parent().index_u32()),
@@ -781,7 +781,7 @@ fn send_models(
                     material_alpha_cutoff,
                     material_double_sided,
                 } => net.send_many(
-                    observers.filter(subs),
+                    observers.filter(subs).copied(),
                     messages::SpawnCustomModel {
                         model_id: entity.index_u32(),
                         parent_id: maybe_parent.map(|p| p.parent().index_u32()),
@@ -804,7 +804,7 @@ fn send_models(
 
             if let Some(color) = maybe_color {
                 net.send_many(
-                    observers.filter(subs),
+                    observers.filter(subs).copied(),
                     messages::ModelColor {
                         model_id: entity.index_u32(),
                         color: color.to_vec4(),
@@ -813,7 +813,7 @@ fn send_models(
             }
         } else {
             net.send_many(
-                observers.filter(subs),
+                observers.filter(subs).copied(),
                 messages::DeleteModel {
                     model_id: entity.index_u32(),
                 },
@@ -823,7 +823,7 @@ fn send_models(
 }
 
 fn send_models_on_chunk_subscription(
-    net: Res<Server>,
+    mut net: ResMut<Server>,
     model_map: Res<ModelMap>,
     model_query: Query<(
         Option<&ChildOf>,
@@ -921,7 +921,7 @@ fn send_models_on_chunk_subscription(
 }
 
 fn send_animations(
-    net: Res<Server>,
+    mut net: ResMut<Server>,
     chunk_subscriptions: Res<ChunkSubscriptions>,
     mut animation_query: Query<
         (Entity, &mut AnimationPlayer, &Transform),
@@ -941,7 +941,7 @@ fn send_animations(
 
         for animation in animation_player.animation_queue.drain(..) {
             net.send_many(
-                subs,
+                subs.iter().copied(),
                 messages::ModelPlayAnimation {
                     model_id: animation_player.target.unwrap_or(entity).index_u32(),
                     animation_index: animation.animation_index,
@@ -957,7 +957,7 @@ fn send_animations(
 }
 
 fn send_color(
-    net: Res<Server>,
+    mut net: ResMut<Server>,
     chunk_subscriptions: Res<ChunkSubscriptions>,
     color_query: Query<(Entity, &ModelColor, &GlobalTransform), Changed<ModelColor>>,
 ) {
@@ -969,7 +969,7 @@ fn send_color(
         };
 
         net.send_many(
-            subs,
+            subs.iter().copied(),
             messages::ModelColor {
                 model_id: entity.index_u32(),
                 color: color.to_vec4(),

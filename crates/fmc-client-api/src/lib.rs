@@ -26,15 +26,25 @@ macro_rules! register_plugin {
     };
 }
 
-static mut PLUGIN: Option<Box<dyn Plugin>> = None;
+thread_local! {
+    static PLUGIN: OnceLock<RefCell<Box<dyn Plugin>>> = OnceLock::new();
+}
 
 #[doc(hidden)]
 pub fn register_plugin(build_plugin: fn() -> Box<dyn Plugin>) {
-    unsafe { PLUGIN = Some((build_plugin)()) }
+    PLUGIN.with(|p| p.set(RefCell::new(build_plugin())));
 }
 
-fn plugin() -> &'static mut dyn Plugin {
-    unsafe { PLUGIN.as_deref_mut().unwrap() }
+fn with_plugin<F, R>(f: F) -> R
+where
+    F: FnOnce(&mut dyn Plugin) -> R,
+{
+    PLUGIN.with(|p| {
+        let cell = p.get().expect("plugin not initialized");
+        let mut guard = cell.borrow_mut();
+
+        f(guard.as_mut())
+    })
 }
 
 mod wit {
@@ -57,6 +67,8 @@ mod wit {
     }
 }
 
+use std::{cell::RefCell, sync::OnceLock};
+
 pub use wit::{
     Key, KeyboardKey, delta_time, get_block, get_block_state, get_camera_transform,
     get_model_transform, get_models, get_player_transform, keyboard_input, log,
@@ -78,14 +90,14 @@ struct Component;
 
 impl wit::Guest for Component {
     fn set_update_frequency() -> Option<f32> {
-        plugin().set_update_frequency()
+        with_plugin(|p| p.set_update_frequency())
     }
 
     fn update() {
-        plugin().update()
+        with_plugin(|p| p.update());
     }
 
     fn handle_server_data(data: Vec<u8>) {
-        plugin().handle_server_data(data)
+        with_plugin(|p| p.handle_server_data(data));
     }
 }

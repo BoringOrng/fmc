@@ -194,7 +194,7 @@ pub enum BlockUpdate {
 // Applies block updates to the world and sends them to the players.
 fn handle_block_updates(
     mut commands: Commands,
-    net: Res<Server>,
+    mut net: ResMut<Server>,
     mut world_map: ResMut<WorldMap>,
     chunk_subsriptions: Res<chunk_manager::ChunkSubscriptions>,
     mut block_events: ResMut<Messages<BlockUpdate>>,
@@ -315,7 +315,7 @@ fn handle_block_updates(
     for (chunk_position, blocks) in chunked_updates.drain() {
         if let Some(subscribers) = chunk_subsriptions.get_subscribers(&chunk_position) {
             net.send_many(
-                subscribers,
+                subscribers.iter().copied(),
                 messages::BlockUpdates {
                     chunk_position: *chunk_position,
                     blocks,
@@ -366,7 +366,7 @@ async fn save_blocks(
         .prepare(
             r#"
         update blocks
-        set 
+        set
             block_data = ?
         where
             x = ? and y = ? and z = ?

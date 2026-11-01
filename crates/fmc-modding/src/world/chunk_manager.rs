@@ -134,7 +134,7 @@ impl ChunkSubscriptions {
 
 fn manage_subscriptions(
     mut commands: Commands,
-    net: Res<Server>,
+    mut net: ResMut<Server>,
     world_map: Res<WorldMap>,
     database: Res<Database>,
     mut chunk_subscriptions: ResMut<ChunkSubscriptions>,
@@ -379,7 +379,7 @@ fn traversal_subscriber(
 
 fn handle_chunk_loading_tasks(
     mut commands: Commands,
-    net: Res<Server>,
+    mut net: ResMut<Server>,
     mut world_map: ResMut<WorldMap>,
     chunk_subscriptions: Res<ChunkSubscriptions>,
     mut subscription_triggers: Query<&mut SubscriptionTrigger>,
@@ -445,7 +445,7 @@ fn handle_chunk_loading_tasks(
                             chunk_subscriptions.get_subscribers(&chunk_position)
                         {
                             net.send_many(
-                                subscribers,
+                                subscribers.iter().copied(),
                                 messages::BlockUpdates {
                                     chunk_position: *chunk_position,
                                     blocks,
@@ -512,7 +512,7 @@ fn handle_chunk_loading_tasks(
             }
 
             net.send_many(
-                subscribers,
+                subscribers.iter().copied(),
                 messages::Chunk {
                     position: *new_chunk_position,
                     blocks: chunk.blocks.clone(),
