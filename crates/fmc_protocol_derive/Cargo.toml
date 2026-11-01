@@ -1,7 +1,9 @@
 [package]
-name = "fmc-protocol-derive"
+name = "fmc_protocol_derive"
 version = "0.1.0"
 license = "MIT OR Apache-2.0"
+description = "Derive macros for fmc_protocol"
+repository.workspace = true
 edition.workspace = true
 
 [lib]

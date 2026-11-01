@@ -180,7 +180,7 @@ fn plugin_activation(
 
 mod wit {
     wasmtime::component::bindgen!({
-        path: "crates/fmc-client-api/src/api.wit",
+        path: "crates/fmc_client_api/src/api.wit",
     });
     // TODO: I'd like to just use bevy's types, but it complains about traits that are not derived,
     // maybe the foreign type constraint?
