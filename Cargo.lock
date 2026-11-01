@@ -4090,7 +4090,24 @@ dependencies = [
 ]
 
 [[package]]
-name = "fmc-mod-api"
+name = "fmc-protocol"
+version = "0.1.0"
+dependencies = [
+ "bevy 0.19.1",
+ "fmc-protocol-derive",
+ "serde",
+]
+
+[[package]]
+name = "fmc-protocol-derive"
+version = "0.1.0"
+dependencies = [
+ "quote",
+ "syn 3.0.9",
+]
+
+[[package]]
+name = "fmc-sdk"
 version = "0.1.0"
 dependencies = [
  "bevy 0.19.1",
@@ -4106,23 +4123,6 @@ dependencies = [
  "serde_json",
  "tar",
  "zstd 0.14.3",
-]
-
-[[package]]
-name = "fmc-protocol"
-version = "0.1.0"
-dependencies = [
- "bevy 0.19.1",
- "fmc-protocol-derive",
- "serde",
-]
-
-[[package]]
-name = "fmc-protocol-derive"
-version = "0.1.0"
-dependencies = [
- "quote",
- "syn 3.0.9",
 ]
 
 [[package]]

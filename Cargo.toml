@@ -92,7 +92,6 @@ rusqlite = { version = "0.34.0", features = ["bundled"] }
 
 fmc_noise = "0.3.2"
 
-fmc-modding.path = "crates/fmc-modding"
 fmc-protocol.path = "crates/fmc-protocol"
 fmc-protocol-derive.path = "crates/fmc-protocol-derive"
 
