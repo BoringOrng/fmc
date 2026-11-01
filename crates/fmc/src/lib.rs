@@ -73,7 +73,7 @@ use bevy::app::{PluginGroup, PluginGroupBuilder};
 
 /// Enables all available functionality.
 ///
-/// Click `source` above to see the list of plugins.
+/// Click `source` above to see the list of plugins.\
 /// To disable plugins:
 /// ```rust
 /// fn main() {
