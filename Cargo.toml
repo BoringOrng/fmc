@@ -62,14 +62,6 @@ exclude = ["docs/examples"]
 edition = "2024"
 repository = "https://github.com/formulaicgame/fmc"
 
-[workspace.lints.clippy.pedantic]
-level = "warn"
-priority = -1
-
-[workspace.lints.clippy.nursery]
-level = "warn"
-priority = -1
-
 [workspace.lints.clippy]
 type_complexity = "allow"
 too_many_arguments = "allow"
