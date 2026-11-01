@@ -5,8 +5,8 @@ license-file = "LICENSE"
 edition.workspace = true
 
 [dependencies]
-bevy.workspace = true
 tracing.workspace = true
+bevy = { workspace = true, features = ["default", "serialize", "file_watcher"] }
 serde.workspace = true
 serde_json.workspace = true
 bincode.workspace = true
@@ -72,11 +72,6 @@ priority = -1
 type_complexity = "allow"
 too_many_arguments = "allow"
 
-[workspace.dependencies.bevy]
-version = "0.19"
-default-features = false
-features = ["3d", "audio", "ui", "serialize"]
-
 [workspace.dependencies.tracing]
 version = "0.1"
 features = [
@@ -85,7 +80,8 @@ features = [
 ]
 
 [workspace.dependencies]
-serde = { version = "1.0.229", features = ["derive"] }
+bevy = { version = "0.19", default-features = false }
+serde ={ version = "1.0.229", features = ["derive"] }
 serde_json = "1.0.154"
 tar = "0.4.46"
 zstd = "0.14.3"
