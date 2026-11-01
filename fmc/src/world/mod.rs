@@ -106,63 +106,70 @@ fn change_player_render_distance(
 
 // TODO: Move block update stuff to own module
 // TODO: Convert tuples to local struct "Block" to make access pretty?
-// TODO: It might be better to remove the back_* front_* blocks. They are only used for water at
-// time of writing. Adds 66% to lookup time.
 //
-// Some blocks need to know when blocks adjacent to them change (for example water needs to know
-// when it should spread). Instead of sending out the position of the changed block, this struct is
-// constructed to save on lookup time as each system that reacts to it would need to query all the
-// adjacent blocks separately.
-//
-/// Event sent in response to a block update.
+/// Event sent in response to an applied block update.
 #[derive(Message)]
 pub struct ChangedBlockEvent {
     /// The position of the block that was changed.
     pub position: BlockPosition,
     pub from: (BlockId, Option<BlockState>),
-    /// What block it was changed into
     pub to: (BlockId, Option<BlockState>),
-    pub top: Option<(BlockId, Option<BlockState>)>,
-    pub bottom: Option<(BlockId, Option<BlockState>)>,
-    pub back: Option<(BlockId, Option<BlockState>)>,
-    pub back_right: Option<(BlockId, Option<BlockState>)>,
-    pub back_left: Option<(BlockId, Option<BlockState>)>,
-    pub right: Option<(BlockId, Option<BlockState>)>,
-    pub left: Option<(BlockId, Option<BlockState>)>,
-    pub front: Option<(BlockId, Option<BlockState>)>,
-    pub front_right: Option<(BlockId, Option<BlockState>)>,
-    pub front_left: Option<(BlockId, Option<BlockState>)>,
+    blocks: [Option<(BlockId, Option<BlockState>)>; 27],
+}
+
+impl ChangedBlockEvent {
+    fn new(
+        world_map: &WorldMap,
+        position: BlockPosition,
+        from: (BlockId, Option<BlockState>),
+    ) -> Self {
+        let mut blocks = [None; 27];
+
+        for x in -1..=1 {
+            for y in -1..=1 {
+                for z in -1..=1 {
+                    let offset = IVec3::new(x, y, z);
+                    let neighbour = position + offset;
+                    blocks[Self::offset_to_index(offset)] = world_map
+                        .get_block(neighbour)
+                        .map(|block_id| (block_id, world_map.get_block_state(neighbour)));
+                }
+            }
+        }
+
+        let to = blocks[Self::offset_to_index(IVec3::ZERO)].unwrap();
+
+        Self {
+            position,
+            from,
+            to,
+            blocks,
+        }
+    }
+
+    #[track_caller]
+    fn offset_to_index(offset: IVec3) -> usize {
+        assert!(
+            offset.abs().max_element() <= 1,
+            "Tried to index a changed block's surroundings with the out of bounds offset {}",
+            offset
+        );
+        ((offset.x + 1) * 9 + (offset.y + 1) * 3 + (offset.z + 1)) as usize
+    }
+}
+
+impl Index<IVec3> for ChangedBlockEvent {
+    type Output = Option<(BlockId, Option<BlockState>)>;
+    #[track_caller]
+    fn index(&self, offset: IVec3) -> &Self::Output {
+        &self.blocks[Self::offset_to_index(offset)]
+    }
 }
 
 impl Index<BlockFace> for ChangedBlockEvent {
     type Output = Option<(BlockId, Option<BlockState>)>;
-    fn index(&self, index: BlockFace) -> &Self::Output {
-        match index {
-            BlockFace::Front => &self.front,
-            BlockFace::Back => &self.back,
-            BlockFace::Right => &self.right,
-            BlockFace::Left => &self.left,
-            BlockFace::Top => &self.top,
-            BlockFace::Bottom => &self.bottom,
-        }
-    }
-}
-
-impl Index<[BlockFace; 2]> for ChangedBlockEvent {
-    type Output = Option<(BlockId, Option<BlockState>)>;
-    #[track_caller]
-    fn index(&self, index: [BlockFace; 2]) -> &Self::Output {
-        match index {
-            [BlockFace::Front, BlockFace::Left] => &self.front_left,
-            [BlockFace::Left, BlockFace::Front] => &self.front_left,
-            [BlockFace::Front, BlockFace::Right] => &self.front_right,
-            [BlockFace::Right, BlockFace::Front] => &self.front_right,
-            [BlockFace::Back, BlockFace::Left] => &self.back_left,
-            [BlockFace::Left, BlockFace::Back] => &self.back_left,
-            [BlockFace::Back, BlockFace::Right] => &self.back_right,
-            [BlockFace::Right, BlockFace::Back] => &self.back_right,
-            _ => panic!("Tried to index with non-horizontal blockfaces."),
-        }
+    fn index(&self, block_face: BlockFace) -> &Self::Output {
+        &self[block_face.offset()]
     }
 }
 
@@ -178,6 +185,8 @@ pub enum BlockUpdate {
         block_state: Option<BlockState>,
         block_data: Option<BlockData>,
     },
+    // TODO: Should probably be one each for swapping data/state/id instead of having a Swap that
+    // covers two.
     /// Swap out a block, keeping its entity and block data.
     Swap {
         position: BlockPosition,
@@ -201,6 +210,7 @@ fn handle_block_updates(
     mut changed_block_events: MessageWriter<ChangedBlockEvent>,
     mut block_update_cache: ResMut<BlockUpdateCache>,
     mut chunked_updates: Local<HashMap<ChunkPosition, Vec<(usize, BlockId, Option<u16>)>>>,
+    mut changed_blocks: Local<Vec<(BlockPosition, (BlockId, Option<BlockState>))>>,
 ) {
     for event in block_events.drain() {
         match event {
@@ -268,15 +278,7 @@ fn handle_block_updates(
                 // TODO: This is slow, see function defintion.
                 chunk.check_visible_faces();
 
-                send_changed_block_event(
-                    &world_map,
-                    &mut changed_block_events,
-                    position,
-                    prev_block,
-                    prev_block_state,
-                    block_id,
-                    block_state,
-                );
+                changed_blocks.push((position, (prev_block, prev_block_state)));
 
                 block_update_cache
                     .updates
@@ -311,6 +313,12 @@ fn handle_block_updates(
             _ => (),
         }
     }
+
+    changed_block_events.write_batch(
+        changed_blocks
+            .drain(..)
+            .map(|(position, from)| ChangedBlockEvent::new(&world_map, position, from)),
+    );
 
     for (chunk_position, blocks) in chunked_updates.drain() {
         if let Some(subscribers) = chunk_subsriptions.get_subscribers(&chunk_position) {
@@ -409,70 +417,4 @@ fn save_blocks_to_database(
             .spawn(save_blocks(database.clone(), block_updates, block_data))
             .detach();
     }
-}
-
-fn send_changed_block_event(
-    world_map: &WorldMap,
-    changed_block_events: &mut MessageWriter<ChangedBlockEvent>,
-    position: BlockPosition,
-    prev_block_id: BlockId,
-    prev_block_state: Option<BlockState>,
-    block_id: BlockId,
-    block_state: Option<BlockState>,
-) {
-    changed_block_events.write(ChangedBlockEvent {
-        position,
-        from: (prev_block_id, prev_block_state),
-        to: (block_id, block_state),
-        top: world_map
-            .get_block(position + IVec3::Y)
-            .map(|block_id| (block_id, world_map.get_block_state(position + IVec3::Y))),
-        bottom: world_map
-            .get_block(position - IVec3::Y)
-            .map(|block_id| (block_id, world_map.get_block_state(position - IVec3::Y))),
-        right: world_map
-            .get_block(position + IVec3::X)
-            .map(|block_id| (block_id, world_map.get_block_state(position + IVec3::X))),
-        left: world_map
-            .get_block(position - IVec3::X)
-            .map(|block_id| (block_id, world_map.get_block_state(position - IVec3::X))),
-        front: world_map
-            .get_block(position + IVec3::Z)
-            .map(|block_id| (block_id, world_map.get_block_state(position + IVec3::Z))),
-        front_left: world_map
-            .get_block(position + IVec3::Z - IVec3::X)
-            .map(|block_id| {
-                (
-                    block_id,
-                    world_map.get_block_state(position + IVec3::Z - IVec3::X),
-                )
-            }),
-        front_right: world_map
-            .get_block(position + IVec3::Z + IVec3::X)
-            .map(|block_id| {
-                (
-                    block_id,
-                    world_map.get_block_state(position + IVec3::Z + IVec3::X),
-                )
-            }),
-        back: world_map
-            .get_block(position - IVec3::Z)
-            .map(|block_id| (block_id, world_map.get_block_state(position - IVec3::Z))),
-        back_left: world_map
-            .get_block(position - IVec3::Z - IVec3::X)
-            .map(|block_id| {
-                (
-                    block_id,
-                    world_map.get_block_state(position - IVec3::Z - IVec3::X),
-                )
-            }),
-        back_right: world_map
-            .get_block(position - IVec3::Z + IVec3::X)
-            .map(|block_id| {
-                (
-                    block_id,
-                    world_map.get_block_state(position - IVec3::Z + IVec3::X),
-                )
-            }),
-    });
 }
