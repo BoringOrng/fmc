@@ -553,7 +553,7 @@ impl ModelMap {
 }
 
 fn remove_models(
-    mut net: ResMut<Server>,
+    net: Res<Server>,
     mut model_map: ResMut<ModelMap>,
     chunk_subscriptions: Res<ChunkSubscriptions>,
     mut deleted_models: RemovedComponents<Model>,
@@ -586,7 +586,7 @@ fn remove_models(
 
 // TODO: Split position, rotation and scale into packets?
 fn send_model_transform(
-    mut net: ResMut<Server>,
+    net: Res<Server>,
     chunk_subscriptions: Res<ChunkSubscriptions>,
     mut model_map: ResMut<ModelMap>,
     model_query: Query<
@@ -684,7 +684,7 @@ fn apply_movement_animations(
 
 // TODO: I'm not entirely sure what the purpose of this was. Why not just replace the model?
 fn update_model_assets(
-    mut net: ResMut<Server>,
+    net: Res<Server>,
     chunk_subscriptions: Res<ChunkSubscriptions>,
     model_query: Query<
         (Entity, Ref<Model>, &Observers, &Transform, &ModelVisibility),
@@ -719,7 +719,7 @@ fn update_model_assets(
 
 // TODO: Animations must be sent
 fn send_models(
-    mut net: ResMut<Server>,
+    net: Res<Server>,
     chunk_subscriptions: Res<ChunkSubscriptions>,
     model_query: Query<
         (
@@ -823,7 +823,7 @@ fn send_models(
 }
 
 fn send_models_on_chunk_subscription(
-    mut net: ResMut<Server>,
+    net: Res<Server>,
     model_map: Res<ModelMap>,
     model_query: Query<(
         Option<&ChildOf>,
@@ -921,7 +921,7 @@ fn send_models_on_chunk_subscription(
 }
 
 fn send_animations(
-    mut net: ResMut<Server>,
+    net: Res<Server>,
     chunk_subscriptions: Res<ChunkSubscriptions>,
     mut animation_query: Query<
         (Entity, &mut AnimationPlayer, &Transform),
@@ -957,7 +957,7 @@ fn send_animations(
 }
 
 fn send_color(
-    mut net: ResMut<Server>,
+    net: Res<Server>,
     chunk_subscriptions: Res<ChunkSubscriptions>,
     color_query: Query<(Entity, &ModelColor, &GlobalTransform), Changed<ModelColor>>,
 ) {

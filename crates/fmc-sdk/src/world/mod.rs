@@ -194,7 +194,7 @@ pub enum BlockUpdate {
 // Applies block updates to the world and sends them to the players.
 fn handle_block_updates(
     mut commands: Commands,
-    mut net: ResMut<Server>,
+    net: Res<Server>,
     mut world_map: ResMut<WorldMap>,
     chunk_subsriptions: Res<chunk_manager::ChunkSubscriptions>,
     mut block_events: ResMut<Messages<BlockUpdate>>,

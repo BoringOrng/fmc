@@ -26,25 +26,24 @@ macro_rules! register_plugin {
     };
 }
 
-thread_local! {
-    static PLUGIN: OnceLock<RefCell<Box<dyn Plugin>>> = OnceLock::new();
-}
+static mut PLUGIN: Option<Box<dyn Plugin>> = None;
 
 #[doc(hidden)]
 pub fn register_plugin(build_plugin: fn() -> Box<dyn Plugin>) {
-    PLUGIN.with(|p| p.set(RefCell::new(build_plugin())));
+    unsafe {
+        PLUGIN = Some(build_plugin());
+    }
 }
 
+#[expect(static_mut_refs, reason = "will be fixed eventually")]
 fn with_plugin<F, R>(f: F) -> R
 where
     F: FnOnce(&mut dyn Plugin) -> R,
 {
-    PLUGIN.with(|p| {
-        let cell = p.get().expect("plugin not initialized");
-        let mut guard = cell.borrow_mut();
-
-        f(guard.as_mut())
-    })
+    unsafe {
+        let plugin = PLUGIN.as_mut().expect("plugin not initialized");
+        f(plugin.as_mut())
+    }
 }
 
 mod wit {
