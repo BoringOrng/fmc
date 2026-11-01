@@ -3054,7 +3054,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "fmc-modding"
+name = "fmc-mod-api"
 version = "0.1.0"
 dependencies = [
  "bevy",
