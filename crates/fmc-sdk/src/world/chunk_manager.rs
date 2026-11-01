@@ -445,7 +445,7 @@ fn handle_chunk_loading_tasks(
                             chunk_subscriptions.get_subscribers(&chunk_position)
                         {
                             net.send_many(
-                                subscribers.iter().copied(),
+                                subscribers,
                                 messages::BlockUpdates {
                                     chunk_position: *chunk_position,
                                     blocks,
@@ -512,7 +512,7 @@ fn handle_chunk_loading_tasks(
             }
 
             net.send_many(
-                subscribers.iter().copied(),
+                subscribers,
                 messages::Chunk {
                     position: *new_chunk_position,
                     blocks: chunk.blocks.clone(),

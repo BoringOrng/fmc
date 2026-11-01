@@ -118,14 +118,14 @@ impl Server {
     /// Send a message to one client
     #[track_caller]
     pub fn send_one<T: ClientBound + Serialize>(&self, connection_entity: Entity, message: T) {
-        self.send_many([connection_entity], message);
+        self.send_many(&[connection_entity], message);
     }
 
     /// Send a message to many clients
     #[track_caller]
-    pub fn send_many<T: ClientBound + Serialize>(
+    pub fn send_many<'a, T: ClientBound + Serialize>(
         &self,
-        connection_entities: impl IntoIterator<Item = Entity>,
+        connection_entities: impl IntoIterator<Item = &'a Entity>,
         message: T,
     ) {
         assert!(
@@ -141,7 +141,7 @@ impl Server {
             };
 
             if connection.write_message(&message).is_err() {
-                if self.disconnect(connection_entity) {
+                if self.disconnect(*connection_entity) {
                     error!(
                         "Failed to send message, the player's write buffer is at capacity. Server is \
                         sending too much, or the connection is too slow. Disconnecting to prevent the \
@@ -155,7 +155,7 @@ impl Server {
     /// Broadcast a message to all the clients
     #[track_caller]
     pub fn broadcast<T: ClientBound + Serialize>(&mut self, message: T) {
-        let keys = self.connections.keys().copied();
+        let keys = self.connections.keys();
         self.send_many(keys, message);
     }
 

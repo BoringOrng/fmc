@@ -575,7 +575,7 @@ fn remove_models(
 
         if let Some(subs) = chunk_subscriptions.get_subscribers(&chunk_position) {
             net.send_many(
-                subs.iter().copied(),
+                subs,
                 messages::DeleteModel {
                     model_id: entity.index_u32(),
                 },
@@ -615,7 +615,7 @@ fn send_model_transform(
         };
 
         net.send_many(
-            subs.iter().copied(),
+            subs,
             messages::ModelUpdateTransform {
                 model_id: entity.index_u32(),
                 bone: None,
@@ -708,7 +708,7 @@ fn update_model_assets(
         };
 
         net.send_many(
-            observers.filter(subs).copied(),
+            observers.filter(subs),
             messages::ModelUpdateAsset {
                 model_id: entity.index_u32(),
                 asset: model_id,
@@ -758,7 +758,7 @@ fn send_models(
             match model {
                 Model::Asset(model_id) => {
                     net.send_many(
-                        observers.filter(subs).copied(),
+                        observers.filter(subs),
                         messages::NewModel {
                             model_id: entity.index_u32(),
                             parent_id: maybe_parent.map(|p| p.parent().index_u32()),
@@ -781,7 +781,7 @@ fn send_models(
                     material_alpha_cutoff,
                     material_double_sided,
                 } => net.send_many(
-                    observers.filter(subs).copied(),
+                    observers.filter(subs),
                     messages::SpawnCustomModel {
                         model_id: entity.index_u32(),
                         parent_id: maybe_parent.map(|p| p.parent().index_u32()),
@@ -804,7 +804,7 @@ fn send_models(
 
             if let Some(color) = maybe_color {
                 net.send_many(
-                    observers.filter(subs).copied(),
+                    observers.filter(subs),
                     messages::ModelColor {
                         model_id: entity.index_u32(),
                         color: color.to_vec4(),
@@ -813,7 +813,7 @@ fn send_models(
             }
         } else {
             net.send_many(
-                observers.filter(subs).copied(),
+                observers.filter(subs),
                 messages::DeleteModel {
                     model_id: entity.index_u32(),
                 },
@@ -941,7 +941,7 @@ fn send_animations(
 
         for animation in animation_player.animation_queue.drain(..) {
             net.send_many(
-                subs.iter().copied(),
+                subs.iter(),
                 messages::ModelPlayAnimation {
                     model_id: animation_player.target.unwrap_or(entity).index_u32(),
                     animation_index: animation.animation_index,
@@ -969,7 +969,7 @@ fn send_color(
         };
 
         net.send_many(
-            subs.iter().copied(),
+            subs.iter(),
             messages::ModelColor {
                 model_id: entity.index_u32(),
                 color: color.to_vec4(),

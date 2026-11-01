@@ -315,7 +315,7 @@ fn handle_block_updates(
     for (chunk_position, blocks) in chunked_updates.drain() {
         if let Some(subscribers) = chunk_subsriptions.get_subscribers(&chunk_position) {
             net.send_many(
-                subscribers.iter().copied(),
+                subscribers,
                 messages::BlockUpdates {
                     chunk_position: *chunk_position,
                     blocks,
